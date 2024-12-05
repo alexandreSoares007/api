@@ -1,4 +1,4 @@
-const mysql = require('mysql2/promisse');
+const mysql = require('mysql2/promise');
 require('dotenv').config(); //carrega ambiente as variáveis de ambiente 
 //cria um pool de conexões com promises 
 const db = mysql.createPool({
@@ -12,13 +12,13 @@ const db = mysql.createPool({
 //teste a conexão ao iniciar a aplicação 
 
 (async () => {
-    try{
+    try {
         const connection = await db.getConnection();
         console.log('conexão com o banco de dados estabelecida com sucesso!');
         connection.release(); //libera a conexão de volta para o pool 
-    } catch (err){
+    } catch (err) {
         console.error('erro ao conectar ao banco de dados;', err);
     }
-})(); 
+})();
 
 module.exports = db;

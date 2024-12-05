@@ -14,7 +14,7 @@ const clienteSchema = Joi.object({
     endereco: Joi.string().required().max(80),
     //endereço deve ser uma string e é obrigatorio
     bairro: Joi.string().required().max(80),
-    cidade: Joi.string().required.max(80),
+    cidade: Joi.string().required().max(80),
     cep: Joi.string().required(),
     telefone: Joi.string().required(),
     //telefone deve ser uma string e é obrigatorio
@@ -31,7 +31,7 @@ exports.listarClientes = async (req, res) => {
         const [result] = await db.query('SELECT * FROM cliente');
         res.json(result); //aqui retornamos apenas os dados da conta 
     } catch(err){
-        console.error('erro ao buscar clientes:');
+        console.error('erro ao buscar clientes:',err);
         res.status(500).json({error: 'erro interno no servidor'});
     }
 };
@@ -43,7 +43,7 @@ exports.listarClientesCpf = async (req,res) =>{
     try{
         const[result] = await db.query('SELECT * FROM cliente WHERE cpf = ? ' , [cpf]);
         if (result.length === 0 ) {
-            return res.status(404).json({error: 'cliente não encontrado'})
+            return res.status(404).json({error: 'cliente não encontrado'});
         }
         res.json(result[0]);
     } catch (err){
@@ -55,5 +55,63 @@ exports.listarClientesCpf = async (req,res) =>{
 //adicionar novo cliente 
 
 exports.adicionarCliente = async (req, res) => {
-    const{cpf,nome,endereco,bairro,cidade,cep,telefone,email,}
-}
+    const{cpf,nome,endereco,bairro,cidade,cep,telefone,email,senha} = req.body;
+    //variação de dados 
+    const{error} = clienteSchema.validate({cpf,nome,endereco,bairro,cidade,cep,telefone,email,senha});
+    if (error) {
+        return res.status(400).json({error: error.details[0].message});
+    }
+     try {
+        const hash  = await bcrypt.hash(senha, 10);
+        const novoCliente = {cpf,nome,endereco,bairro,cidade,cep,telefone,email,senha : hash};
+        await db.query('INSERT INTO cliente SET ?', novoCliente);
+        res.json({message: 'cliente adicionado com sucesso'});
+    } catch (err){
+        console.error('Erro ao adicionar cliente:',err);
+        res.status(500).json({error:'erro ao adicionar cliente'});   
+    }
+};
+
+//atualiza cliente 
+
+exports.atualizarCliente = async (req,res) => {
+    const {cpf} = req.params;
+    const{nome,endereco,bairro,cidade,cep,telefone,email,senha} = req.body;
+    //validar dados 
+    const{error} = clienteSchema.validate({cpf,nome,endereco,bairro,cidade,cep,telefone,email,senha});
+    if (error) {
+        return res.status(400).json({error: error.details[0].message})
+    }
+    try{
+        //verifica se o cliente existe antes de atualizar 
+        const[result] = await db.query('SELECT * FROM cliente WHERE cpf = ?',[cpf]);
+        if (result.length === 0 ) {
+            return res.status(404).json({error: 'cliente não encontrado'});
+        }
+        //criptografando a senha 
+        const hash = await bcrypt.hash(senha, 10);
+        const ClienteAtualizado = {nome,endereco,bairro,cidade,cep,telefone,email,senha: hash};
+        await db.query('UPDATE cliente SET ? WHERE cpf = ?',[ClienteAtualizado,cpf]);
+        res.json({message: 'Cliente atualizado com sucesso'});
+    }catch (err){
+        console.error('Erro ao atualizar cliente:', err);
+        res.status(500).json({error:'erro ao atualizar cliente'});
+    }
+};
+
+//deletar cliente 
+exports.deletarCliente = async (req,res) => {
+    const {cpf} = req.params;
+    try{
+        //verifica se o cliente existe antes de deletar 
+        const[result] = await db.query('SELECT * FROM cliente WHERE cpf = ?',[cpf]);
+        if (result.length === 0) {
+            return  res.status(404).json({error: 'cliente não encontrado'});
+        }
+        await db.query('DELETE FROM cliente WHERE cpf = ?',[cpf]);
+        res.json({message: 'cliente deletado com sucesso'});
+    } catch (err){
+        console.error('Erro ao deletar cliente:',err);
+        res.status(500).json({error: 'erro ao deletar cliente'});
+    }
+};
