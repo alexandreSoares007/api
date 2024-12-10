@@ -1,4 +1,4 @@
-const { hash } = require('bcrypt');
+
 const db = require('../db/db');
 //módulo de conexão co mo banco de dados 
 const Joi = require('joi');
@@ -6,7 +6,7 @@ const Joi = require('joi');
 //validação do Joi 
 
 const produtoSchema = Joi.object({
-    idProduto: Joi.string().length().required(),
+    idProduto: Joi.string().required(),
     nomeProduto: Joi.string().required().max(30),
     tipo: Joi.string().required().max(30),
     descricao: Joi.string().required().max(100),
@@ -31,7 +31,7 @@ exports.listaridProduto = async (req, res) => {
     try {
         const [result] = await db.query('SELECT * FROM produto WHERE idProduto = ? ', [idProduto]);
         if (result.length === 0) {
-            return res.status(404).json({ eror: 'produto não encontrado' });
+            return res.status(404).json({ error: 'produto não encontrado' });
         }
         res.json(result[0]);
     } catch (err) {
@@ -61,5 +61,50 @@ exports.adicionarProduto = async (req, res) => {
 exports.atualizarProduto = async (req,res) =>{
     const {idProduto} = req.params;
     const{nomeProduto,tipo,descricao,valorUnit,imagem} = req.body;
-    const{error} = produtoSchema.validate({})
-}
+    const{error} = produtoSchema.validate({idProduto,nomeProduto,tipo,descricao,valorUnit,imagem});
+    if (error) {
+        return res.status(400).json({error: error.details[0].message});
+    }
+    try{
+        const[result] = await db.query('SELECT * FROM produto WHERE  idProduto = ?,'[idProduto]);
+        if (result.length === 0 ) {
+            return res.status(404).json({error:'produto não encontrado'});
+        }
+        const produtoAtualizado = {nomeProduto,tipo,descricao,valorUnit,imagem};
+        await db.query('UPDATE PRODUTO  SET ? WHERE idProduto = ?',[produtoAtualizado,idProduto ]);
+        res.json({message : 'cliente atualizado com sucesso'});
+    } catch {err}{
+        console.error('erro ao atualizar o produto:',err);
+        res.status(500).json({error:'erro ao atualizar cliente'});
+    }
+};
+
+exports.deletarProduto = async(req,res) =>{
+    const{idProduto} = req.params;
+    try{
+        const[result] = await db.query('SELECT * FROM produto WHERE idProduto = ? ');
+        if (result.length === 0 ) {
+            return res.status(404).json({error: 'produto não encontrado'});
+        }
+        await db.query('DELETE FROM produto WHERE idProduto = ?',[idProduto]);
+        res.json({message: 'produto deletado com sucesso'});
+    }catch(err){
+        console.error('erro ao deletar o produto', err);
+        res.status(500).json({error:'erro ao deletar produto'});
+    }
+};
+
+exports.buscarProdutoNome = async(req,res) => {
+    const{ nomeProduto} = req.params;
+    try{
+        const[result]= await db.query('SELECT * FROM produto  WHERE nomeProduto LIKE ?',[`${nomeProduto}%`]);
+        if (result.length === 0 ) {
+            return res.status(404).json({error: 'produto não encontrado'});
+        }
+        res.json(result);
+    }catch(err){
+        console.error('erro ao buacar produto:');
+        res.status(500).json({error:'erro interno do servidor '})
+        
+    }  
+};
