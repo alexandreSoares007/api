@@ -12,6 +12,7 @@ const routes = require('./routes/routes'); //Importar as rotas
 const clienteRoutes = require('./routes/clienteroutes');
 const produtoroutes = require('./routes/produtoroutes');
 const entregadorRoutes = require('./routes/entregadorRoutes');
+const pedidoroutes = require('./routes/pedidorouters');
 const corsOptions = {
     origin: ['http://localhost:3333', 'https://meudominio.com'], //Lista de origens permitidas
     methods: 'GET,POST, PUT,PATCH, DELETE',//métodos http permitidos 
@@ -41,7 +42,9 @@ app.use('/', routes);
 app.use('/', clienteRoutes);
 
 app.use('/',produtoroutes);
+
 app.use('/',entregadorRoutes);
+app.use('/',pedidoroutes);
 //middleware de tratamento de erros
 app.use((err, req, res, next) => {
     console.error(err.stack);
