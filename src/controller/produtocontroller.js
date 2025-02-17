@@ -50,7 +50,7 @@ exports.adicionarProduto = async (req, res) => {
     }
     try {
         const novoProduto = { idProduto, nomeProduto, tipo, descricao, valorUnit, imagem};
-        await db.query('INSERT INTO produto  ? ',novoProduto);
+        await db.query('INSERT INTO produto SET ? ', novoProduto);
         res.json({message: 'produto adicionado com sucesso'});
     }catch (err){
         console.error('erro ao adicionar o produto', err);

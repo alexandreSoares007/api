@@ -2,7 +2,6 @@ const db = require('../db/db')
 const Joi = require('joi')
  
 const entregadorSchema = Joi.object({
-    idEntregador: Joi.string().required().max(50),
     cnh: Joi.string().required(),
     telefoneEntregador: Joi.string().required().max(80),
     nomeEntregador: Joi.string().required().max(50),
@@ -11,7 +10,7 @@ const entregadorSchema = Joi.object({
 //lista dos entregadores
 exports.listaEntregador = async (req, res) => {
     try {
-        const [result] = await db.query('SELECT * FROM ENTREGADOR')
+        const [result] = await db.query('SELECT * FROM entregador')
         res.json(result);
     } catch (err) {
         console.error('Erro ao buscar os entregadores:', err);
@@ -36,14 +35,14 @@ exports.listaEntregadorID = async (req, res) => {
 //Adicionar Entregador
  
 exports.adicionarEntregador = async (req, res) => {
-    const { idEntregador, cnh, telefoneEntregador, nomeEntregador} = req.body;
-    const { error } = entregadorSchema.validade({ idEntregador, cnh, telefoneEntregador, nomeEntregador });
+    const {  cnh, telefoneEntregador, nomeEntregador} = req.body;
+    const { error } = entregadorSchema.validate({ cnh, telefoneEntregador, nomeEntregador });
     if (error) {
         return res.status(400).json({ error: error.details[0].message })
     }
     try {
-        const novoEntregador = { idEntregador, cnh, telefoneEntregador, nomeEntregador }
-        await db.query('INSERT INTO produto SET ?', novoEntregador);
+        const novoEntregador = {cnh, telefoneEntregador, nomeEntregador }
+        await db.query('INSERT INTO entregador SET ?', novoEntregador);
  
         res.json({ message: 'Entregador adicionado com sucesso' })
  

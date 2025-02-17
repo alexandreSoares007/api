@@ -13,3 +13,4 @@ router.put('/entregador/:idEntregador', EntregadorController.atualizarEntregador
 router.delete('/entregador/:idEntregador', EntregadorController.deletarEntregador);
  
 module.exports = router;
+
